@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block title %}Расчёт доставки - 3D Toy Store{% endblock %}
+
+{% block extra_css %}
+<style>
+    .map-container {
+        height: 400px;
+        background-color: #e9ecef;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    .map-container img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .result-card {
+        transition: all 0.3s ease;
+    }
+    .result-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-5">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Расчёт стоимости доставки</h4>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">Адрес магазина</label>
+                    <p class="text-muted">{{ shop_info.address if shop_info else 'Не указан' }}</p>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Телефон магазина</label>
+                    <p class="text-muted">{{ shop_info.phone if shop_info else 'Не указан' }}</p>
+                </div>
+                
+                <hr>
+                
+                <div class="mb-3">
+                    <label for="city" class="form-label">Адрес доставки</label>
+                    <input type="text" class="form-control" id="city" placeholder="Введите адрес" value="{{ current_user.city if current_user.is_authenticated else '' }}">
+                </div>
+                
+                <button class="btn btn-primary w-100" id="calculateBtn" onclick="calculateDelivery()">
+                    <i class="fas fa-calculator"></i> Рассчитать доставку
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-7">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0">Карта магазина</h4>
+            </div>
+            <div class="card-body p-0">
+                <div class="map-container">
+                    {% if map_url %}
+                        <img src="{{ map_url }}" alt="Карта магазина">
+                    {% else %}
+                        <div class="text-center">
+                            <i class="fas fa-map-marker-alt fa-4x text-muted mb-3"></i>
+                            <p>Координаты магазина не заданы</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="resultContainer" style="display: none;" class="mt-4">
+    <div class="card result-card border-success">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0">Результат расчёта</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4 text-center">
+                    <i class="fas fa-city fa-3x text-primary mb-2"></i>
+                    <h6>Адрес</h6>
+                    <p id="resultCity" class="fw-bold"></p>
+                </div>
+                <div class="col-md-4 text-center">
+                    <i class="fas fa-road fa-3x text-primary mb-2"></i>
+                    <h6>Расстояние</h6>
+                    <p id="resultDistance" class="fw-bold"></p>
+                </div>
+                <div class="col-md-4 text-center">
+                    <i class="fas fa-ruble-sign fa-3x text-primary mb-2"></i>
+                    <h6>Стоимость доставки</h6>
+                    <p id="resultCost" class="fw-bold text-success fs-3"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="errorContainer" style="display: none;" class="mt-4">
+    <div class="alert alert-danger" id="errorMessage"></div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function calculateDelivery() {
+    const city = document.getElementById('city').value;
+    if (!city) {
+        showError('Пожалуйста, укажите адрес');
+        return;
+    }
+    
+    showResult(false);
+    showError(false);
+    
+    try {
+        const response = await fetch('/api/delivery/calculate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ city: city })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            document.getElementById('resultCity').textContent = data.city;
+            document.getElementById('resultDistance').textContent = data.distance_km + ' км';
+            document.getElementById('resultCost').textContent = data.delivery_cost + ' ₽';
+            showResult(true);
+        } else {
+            showError(data.error || 'Ошибка при расчёте');
+        }
+    } catch (error) {
+        showError('Ошибка соединения с сервером');
+    }
+}
+
+function showResult(show) {
+    document.getElementById('resultContainer').style.display = show ? 'block' : 'none';
+}
+
+function showError(show, message) {
+    if (show === false) {
+        document.getElementById('errorContainer').style.display = 'none';
+    } else {
+        document.getElementById('errorMessage').textContent = message;
+        document.getElementById('errorContainer').style.display = 'block';
+        setTimeout(() => {
+            document.getElementById('errorContainer').style.display = 'none';
+        }, 5000);
+    }
+}
+</script>
+{% endblock %}
