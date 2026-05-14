@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Мои заказы - 3D Toy Store{% endblock %}
+
+{% block content %}
+<h1>Мои заказы</h1>
+
+{% if orders %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>№ заказа</th>
+                    <th>Товар</th>
+                    <th>Количествово</th>
+                    <th>Цена</th>
+                    <th>Доставка</th>
+                    <th>Итого</th>
+                    <th>Статус</th>
+                    <th>Дата</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr>
+                    <td>{{ order.id }}</td>
+                    <td>{{ order.product.title if order.product else 'Товар удалён' }}</td>
+                    <td>{{ order.quantity }}</td>
+                    <td>{{ order.price_at_time }} ₽</td>
+                    <td>{{ order.delivery_cost }} ₽</td>
+                    <td class="fw-bold">{{ order.total_price }} ₽</td>
+                    <td>
+                        {% if order.status == 'pending' %}
+                            <span class="badge bg-warning">В обработке</span>
+                        {% elif order.status == 'shipped' %}
+                            <span class="badge bg-info">Отправлен</span>
+                        {% elif order.status == 'delivered' %}
+                            <span class="badge bg-success">Доставлен</span>
+                        {% elif order.status == 'cancelled' %}
+                            <span class="badge bg-danger">Отменён</span>
+                        {% else %}
+                            <span class="badge bg-secondary">{{ order.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ order.created_date.strftime('%d.%m.%Y %H:%M') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <div class="alert alert-info">
+        У вас пока нет заказов. <a href="/catalog">Перейти в каталог</a>
+    </div>
+{% endif %}
+{% endblock %}
