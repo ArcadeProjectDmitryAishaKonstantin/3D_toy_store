@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Корзина - 3D Toy Store{% endblock %}
+
+{% block content %}
+<h1>Корзина</h1>
+
+{% if cart_items %}
+    <div class="table-responsive">
+        <table class="table table-bordered">
+            <thead class="table-dark">
+                <tr>
+                    <th>Товар</th>
+                    <th>Цена</th>
+                    <th>Количество</th>
+                    <th>Сумма</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in cart_items %}
+                {# Проверяем, существует ли товар в базе данных #}
+                {% if item.product %}
+                <tr>
+                    <td>{{ item.product.title }}</td>
+                    <td>{{ item.product.price }} ₽</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('cart.update_korzina', item_id=item.id) }}" class="d-flex align-items-center">
+                            <input type="number" name="quantity" value="{{ item.quantity }}" min="0" max="{{ item.product.stock }}" style="width: 80px;" class="form-control form-control-sm">
+                            <button type="submit" class="btn btn-sm btn-secondary ms-2">Обновить</button>
+                        </form>
+                    </td>
+                    <td>{{ item.product.price * item.quantity }} ₽</td>
+                    <td>
+                        <a href="{{ url_for('cart.remove_from_korzina', item_id=item.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('Удалить товар?')">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr class="table-active">
+                    <th colspan="3" class="text-end">Итого:</th>
+                    <th colspan="2">{{ total }} ₽</th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <div class="d-flex justify-content-between">
+        <a href="/catalog" class="btn btn-outline-secondary">Продолжить покупки</a>
+        <a href="/checkout" class="btn btn-success btn-lg">Оформить заказ</a>
+    </div>
+{% else %}
+    <div class="alert alert-info">
+        Ваша корзина пуста. <a href="/catalog">Перейти в каталог</a>
+    </div>
+{% endif %}
+{% endblock %}
